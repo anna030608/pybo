@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect, resolve_url
@@ -21,8 +23,7 @@ def comment_create_question(request, question_id):
             comment.create_date = timezone.now()
             comment.question = question
             comment.save()
-            return redirect('{}#comment_{}'.format(
-                resolve_url('pybo:detail', question_id=comment.question.id), comment.id))
+            return redirect(comment)
     else:
         form = CommentForm()
     context = {'form': form}
@@ -36,18 +37,16 @@ def comment_modify_question(request, comment_id):
     """
     comment = get_object_or_404(Comment, pk=comment_id)
     if request.user != comment.author:
-        messages.error(request, '댓글수정권한이 없습니다')
-        return redirect('pybo:detail', question_id=comment.question.id)
+        messages.error(request, '댓글 수정 권한이 없습니다.')
+        return redirect(comment.question)
 
     if request.method == "POST":
         form = CommentForm(request.POST, instance=comment)
         if form.is_valid():
             comment = form.save(commit=False)
-            comment.author = request.user
             comment.modify_date = timezone.now()
             comment.save()
-            return redirect('{}#comment_{}'.format(
-                resolve_url('pybo:detail', question_id=comment.question.id), comment.id))
+            return redirect(comment)
     else:
         form = CommentForm(instance=comment)
     context = {'form': form}
@@ -61,17 +60,16 @@ def comment_delete_question(request, comment_id):
     """
     comment = get_object_or_404(Comment, pk=comment_id)
     if request.user != comment.author:
-        messages.error(request, '댓글삭제권한이 없습니다')
-        return redirect('pybo:detail', question_id=comment.question_id)
+        messages.error(request, '댓글 삭제 권한이 없습니다.')
     else:
         comment.delete()
-    return redirect('pybo:detail', question_id=comment.question_id)
+    return redirect(comment.question)
 
 
 @login_required(login_url='common:login')
 def comment_create_answer(request, answer_id):
     """
-    pybo 답글댓글등록
+    pybo 답변댓글등록
     """
     answer = get_object_or_404(Answer, pk=answer_id)
     if request.method == "POST":
@@ -82,8 +80,8 @@ def comment_create_answer(request, answer_id):
             comment.create_date = timezone.now()
             comment.answer = answer
             comment.save()
-            return redirect('{}#comment_{}'.format(
-                resolve_url('pybo:detail', question_id=comment.answer.question.id), comment.id))
+            path = request.get_full_path()
+            return redirect(resolve_url(answer.question)+f'?{urlparse(path).query}#comment_{comment.id}')
     else:
         form = CommentForm()
     context = {'form': form}
@@ -93,22 +91,21 @@ def comment_create_answer(request, answer_id):
 @login_required(login_url='common:login')
 def comment_modify_answer(request, comment_id):
     """
-    pybo 답글댓글수정
+    pybo 답변댓글수정
     """
     comment = get_object_or_404(Comment, pk=comment_id)
     if request.user != comment.author:
-        messages.error(request, '댓글수정권한이 없습니다')
-        return redirect('pybo:detail', question_id=comment.answer.question.id)
+        messages.error(request, '댓글 수정 권한이 없습니다.')
+        return redirect(comment.answer.question)
 
     if request.method == "POST":
         form = CommentForm(request.POST, instance=comment)
         if form.is_valid():
             comment = form.save(commit=False)
-            comment.author = request.user
             comment.modify_date = timezone.now()
             comment.save()
-            return redirect('{}#comment_{}'.format(
-                resolve_url('pybo:detail', question_id=comment.answer.question.id), comment.id))
+            path = request.get_full_path()
+            return redirect(resolve_url(comment.answer.question)+f'?{urlparse(path).query}#comment_{comment.id}')
     else:
         form = CommentForm(instance=comment)
     context = {'form': form}
@@ -118,12 +115,13 @@ def comment_modify_answer(request, comment_id):
 @login_required(login_url='common:login')
 def comment_delete_answer(request, comment_id):
     """
-    pybo 답글댓글삭제
+    pybo 답변댓글삭제
     """
     comment = get_object_or_404(Comment, pk=comment_id)
     if request.user != comment.author:
-        messages.error(request, '댓글삭제권한이 없습니다')
-        return redirect('pybo:detail', question_id=comment.answer.question.id)
+        messages.error(request, '댓글 삭제 권한이 없습니다.')
     else:
         comment.delete()
-    return redirect('pybo:detail', question_id=comment.answer.question.id)
+
+    path = request.get_full_path()
+    return redirect(resolve_url(comment.answer.question)+f'?{urlparse(path).query}#answer_{comment.answer.id}')
