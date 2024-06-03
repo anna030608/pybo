@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=20, unique=True, default='')
+    name = models.CharField(max_length=20, unique=True)
     description = models.CharField(max_length=200, null=True, blank=True)
     has_answer = models.BooleanField(default=True)  # 답변가능 여부
 

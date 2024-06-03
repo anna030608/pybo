@@ -14,6 +14,26 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.urls import path, include
+# from common.views import account_views
+from pybo.views import base_views
+
+from django.conf import settings
+from django.conf.urls.static import static
+
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('pybo/', include('pybo.urls')),
+    path('common/', include('common.urls')),
+    path('', base_views.index, name='index'),
+    # path('common/reset/<uidb64>/<token>/', account_views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+handler404 = 'common.views.account_views.page_not_found'
+"""
+from django.contrib import admin
 from django.urls import include, path
 from pybo.views import base_views
 
@@ -22,4 +42,4 @@ urlpatterns = [
     path('common/', include('common.urls')),
     path('admin/', admin.site.urls),
     path('', base_views.index, name='index'),  # '/' 에 해당되는 path
-]
+]"""
